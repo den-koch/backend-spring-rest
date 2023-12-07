@@ -1,0 +1,36 @@
+##############################
+## Java
+##############################
+.mtj.tmp/
+*.class
+*.log
+*.jar
+*.war
+*.ear
+*.nar
+*.zip
+*.tar.gz
+*.rar
+hs_err_pid*
+replay_pid*
+*.ctxt
+
+HELP.md
+target/
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+##############################
+## IntelliJ
+##############################
+out/
+.idea
+.idea_modules/
+*.iml
+*.ipr
+*.iws
+
+
+
+
