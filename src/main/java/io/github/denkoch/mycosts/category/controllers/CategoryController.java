@@ -72,6 +72,7 @@ public class CategoryController {
     @PostMapping
     @Operation(summary = "Create user Category",
             description = "This method creates a new user category",
+            parameters = @Parameter(name = "userId", description = "User identifier", example = "7a44dbc3-30de-4f75-84e9-a3136e45b911"),
             requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     description = "Category Creation Dto",
                     content = @Content(schema = @Schema(implementation = CategoryCreationDto.class)))
