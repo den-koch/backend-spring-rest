@@ -16,9 +16,9 @@ public class PaymentCreationDto {
     @Positive
     private Double moneyAmount;
     @NotNull
-    private UUID userId;
+    private Long userId;
     @NotNull
-    private UUID categoryId;
+    private Long categoryId;
     @NotNull
     private PaymentType paymentType;
 }

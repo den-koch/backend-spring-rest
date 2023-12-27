@@ -8,9 +8,9 @@ import java.util.UUID;
 
 @Value
 public class PaymentDto {
-    private UUID id;
+    private Long id;
     private LocalDateTime dateTime;
     private Double moneyAmount;
-    private UUID categoryId;
+    private Long categoryId;
     private PaymentType paymentType;
 }

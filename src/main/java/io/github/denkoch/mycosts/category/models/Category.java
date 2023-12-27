@@ -8,7 +8,7 @@ import java.util.UUID;
 @Data
 @AllArgsConstructor
 public class Category {
-    private UUID id;
+    private Long id;
     private String label;
-    private UUID userId;
+    private Long userId;
 }

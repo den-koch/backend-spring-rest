@@ -10,10 +10,10 @@ import java.util.UUID;
 @Data
 @AllArgsConstructor
 public class Payment {
-    private UUID id;
-    private LocalDateTime dateTime;
+    private Long id;
     private Double moneyAmount;
-    private UUID userId;
-    private UUID categoryId;
+    private LocalDateTime dateTime;
+    private Long userId;
+    private Long categoryId;
     private PaymentType paymentType;
 }

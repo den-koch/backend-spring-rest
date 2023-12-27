@@ -6,6 +6,6 @@ import java.util.UUID;
 
 @Value
 public class CategoryDto {
-    private UUID id;
+    private Long id;
     private String label;
 }

@@ -11,5 +11,5 @@ public class CategoryCreationDto {
     @NotBlank
     private String label;
     @NotNull
-    private UUID userId;
+    private Long userId;
 }
