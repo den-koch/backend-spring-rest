@@ -8,11 +8,13 @@ import java.util.UUID;
 
 public interface PaymentRepository {
 
-    Payment findById(UUID userId, UUID id);
+    Payment findById(Long userId, Long id);
 
-    Collection<Payment> findAll(UUID userId);
+    Collection<Payment> findAll(Long userId);
 
     Payment save(Payment payment);
 
-    void deleteById(UUID userId, UUID id);
+    void deleteById(Long userId, Long id);
+
+    void deleteByUserId(Long id);
 }
