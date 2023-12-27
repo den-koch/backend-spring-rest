@@ -6,7 +6,7 @@ import io.github.denkoch.mycosts.payment.models.PaymentDto;
 
 public class PaymentMapper {
     public Payment dtoToPayment(PaymentCreationDto paymentCreationDto) {
-        return new Payment(null, paymentCreationDto.getDateTime(), paymentCreationDto.getMoneyAmount(),
+        return new Payment(null, paymentCreationDto.getMoneyAmount(), paymentCreationDto.getDateTime(),
                 paymentCreationDto.getUserId(), paymentCreationDto.getCategoryId(), paymentCreationDto.getPaymentType());
     }
 
