@@ -42,18 +42,18 @@ public class PaymentController {
     @Operation(summary = "Get all user Payments by filter",
             description = "This method returns all user payments by filters",
             parameters = {
-                    @Parameter(name = "userId", description = "User identifier", example = "7a44dbc3-30de-4f75-84e9-a3136e45b911"),
+                    @Parameter(name = "userId", description = "User identifier", example = "21"),
                     @Parameter(name = "before", description = " Time before filter", example = "2023-11-28"),
                     @Parameter(name = "after", description = " Time after filter", example = "2023-12-06"),
-                    @Parameter(name = "categoryId", description = " Category identifier", example = "0ded2f68-b2a7-49f3-856e-6960c9f06cc5"),
+                    @Parameter(name = "categoryId", description = " Category identifier", example = "32"),
                     @Parameter(name = "page", description = "Page number", example = "2"),
             }
     )
     @ApiResponses({@ApiResponse(responseCode = "200", description = "Success")})
-    public ResponseEntity<Collection<PaymentDto>> getPayments(@PathVariable UUID userId,
+    public ResponseEntity<Collection<PaymentDto>> getPayments(@PathVariable Long userId,
                                                               @RequestParam(required = false) LocalDate before,
                                                               @RequestParam(required = false) LocalDate after,
-                                                              @RequestParam(required = false) UUID categoryId,
+                                                              @RequestParam(value = "category", required = false) Long categoryId,
                                                               @RequestParam(required = false, defaultValue = "0") @PositiveOrZero Long page) {
 
         Collection<PaymentDto> collection = paymentService.readPayments(userId, before, after, categoryId, page)
@@ -65,26 +65,23 @@ public class PaymentController {
     @Operation(summary = "Get user Payment by Id",
             description = "This method returns specific user payment by Id",
             parameters = {
-                    @Parameter(name = "userId", description = "User identifier", example = "7a44dbc3-30de-4f75-84e9-a3136e45b911"),
-                    @Parameter(name = "id", description = " Payment identifier", example = "6c65a3a1-ca59-4874-a086-90c7c3c964df")
+                    @Parameter(name = "userId", description = "User identifier", example = "21"),
+                    @Parameter(name = "id", description = " Payment identifier", example = "32")
             }
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Success"),
             @ApiResponse(responseCode = "404", description = "NotFound", content = @Content)}
     )
-    public ResponseEntity<PaymentDto> getPayment(@PathVariable UUID userId, @PathVariable UUID id) {
+    public ResponseEntity<PaymentDto> getPayment(@PathVariable Long userId, @PathVariable Long id) {
         Payment payment = paymentService.readPayment(userId, id);
-        if (payment == null) {
-            return ResponseEntity.notFound().build();
-        }
         return ResponseEntity.ok(paymentMapper.paymentToDto(payment));
     }
 
     @PostMapping
     @Operation(summary = "Create user Payment",
             description = "This method creates a new user payment",
-            parameters = @Parameter(name = "userId", description = "User identifier", example = "7a44dbc3-30de-4f75-84e9-a3136e45b911"),
+            parameters = @Parameter(name = "userId", description = "User identifier", example = "21"),
             requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     description = "Payment Creation Dto",
                     content = @Content(schema = @Schema(implementation = PaymentCreationDto.class)))
@@ -93,8 +90,9 @@ public class PaymentController {
             @ApiResponse(responseCode = "201", description = "Created"),
             @ApiResponse(responseCode = "400", description = "BadRequest", content = @Content)}
     )
-    public ResponseEntity<PaymentDto> postPayment(@PathVariable UUID userId,
+    public ResponseEntity<PaymentDto> postPayment(@PathVariable Long userId,
                                                   @RequestBody @Valid PaymentCreationDto paymentCreationDto) {
+
         if (!userId.equals(paymentCreationDto.getUserId())) {
             return ResponseEntity.badRequest().build();
         }
@@ -110,8 +108,8 @@ public class PaymentController {
     @Operation(summary = "Update user Payment by Id",
             description = "This method updates payment info",
             parameters = {
-                    @Parameter(name = "userId", description = "User identifier", example = "7a44dbc3-30de-4f75-84e9-a3136e45b911"),
-                    @Parameter(name = "id", description = " Payment identifier", example = "6c65a3a1-ca59-4874-a086-90c7c3c964df")
+                    @Parameter(name = "userId", description = "User identifier", example = "21"),
+                    @Parameter(name = "id", description = " Payment identifier", example = "32")
             },
             requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     description = "Payment Creation Dto",
@@ -122,8 +120,8 @@ public class PaymentController {
             @ApiResponse(responseCode = "400", description = "BadRequest", content = @Content),
             @ApiResponse(responseCode = "404", description = "NotFound", content = @Content)}
     )
-    public ResponseEntity<PaymentDto> putPayment(@PathVariable UUID userId,
-                                                 @PathVariable UUID id,
+    public ResponseEntity<PaymentDto> putPayment(@PathVariable Long userId,
+                                                 @PathVariable Long id,
                                                  @RequestBody @Valid PaymentCreationDto paymentCreationDto) {
 
         if (!userId.equals(paymentCreationDto.getUserId())) {
@@ -141,16 +139,16 @@ public class PaymentController {
     @Operation(summary = "Delete user Payment by Id",
             description = "This method deletes a user payment by Id",
             parameters = {
-                    @Parameter(name = "userId", description = "User identifier", example = "7a44dbc3-30de-4f75-84e9-a3136e45b911"),
-                    @Parameter(name = "id", description = " Payment identifier", example = "6c65a3a1-ca59-4874-a086-90c7c3c964df")
+                    @Parameter(name = "userId", description = "User identifier", example = "21"),
+                    @Parameter(name = "id", description = " Payment identifier", example = "32")
             }
     )
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "NoContent"),
             @ApiResponse(responseCode = "404", description = "NotFound", content = @Content)}
     )
-    public void deletePayment(@PathVariable UUID userId,
-                              @PathVariable UUID id) {
+    public void deletePayment(@PathVariable Long userId,
+                              @PathVariable Long id) {
 
         paymentService.deletePayment(userId, id);
     }

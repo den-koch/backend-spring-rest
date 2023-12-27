@@ -19,7 +19,9 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -47,16 +49,14 @@ public class UserController {
     @GetMapping("/{id}")
     @Operation(summary = "Get User by Id",
             description = "This method returns specific user by identifier",
-            parameters = @Parameter(name = "id", description = "User identifier", example = "7a44dbc3-30de-4f75-84e9-a3136e45b911")
+            parameters = @Parameter(name = "id", description = "User identifier", example = "21")
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Success"),
             @ApiResponse(responseCode = "404", description = "NotFound", content = @Content)}
     )
-    public ResponseEntity<UserDto> getUser(@PathVariable UUID id) {
+    public ResponseEntity<UserDto> getUser(@PathVariable Long id) {
         User user = userService.readUser(id);
-        if (user == null)
-            return ResponseEntity.notFound().build();
         return ResponseEntity.ok(userMapper.userToDto(user));
     }
 
@@ -82,17 +82,16 @@ public class UserController {
     @PutMapping("/{id}")
     @Operation(summary = "Update User by Id",
             description = "This method updates user info",
-            parameters = @Parameter(name = "id", description = "User identifier", example = "7a44dbc3-30de-4f75-84e9-a3136e45b911"),
+            parameters = @Parameter(name = "id", description = "User identifier", example = "21"),
             requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     description = "User Creation Dto",
                     content = @Content(schema = @Schema(implementation = UserCreationDto.class)))
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Success"),
-            @ApiResponse(responseCode = "400", description = "BadRequest", content = @Content),
-            @ApiResponse(responseCode = "404", description = "NotFound", content = @Content)}
+            @ApiResponse(responseCode = "400", description = "BadRequest", content = @Content)}
     )
-    public ResponseEntity<UserDto> putUser(@PathVariable UUID id, @RequestBody @Valid UserCreationDto userCreationDto) {
+    public ResponseEntity<UserDto> putUser(@PathVariable Long id, @RequestBody @Valid UserCreationDto userCreationDto) {
         User user = userMapper.dtoToUser(userCreationDto);
         user.setId(id);
         user = userService.updateUser(user);
@@ -103,14 +102,13 @@ public class UserController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @Operation(summary = "Delete User by Id",
             description = "This method deletes a user by Id",
-            parameters = @Parameter(name = "id", description = "User identifier", example = "7a44dbc3-30de-4f75-84e9-a3136e45b911")
+            parameters = @Parameter(name = "id", description = "User identifier", example = "21")
     )
     @ApiResponses({
             @ApiResponse(responseCode = "204", description = "NoContent"),
             @ApiResponse(responseCode = "404", description = "NotFound", content = @Content)}
     )
-    public void deleteUser(@PathVariable UUID id) {
+    public void deleteUser(@PathVariable Long id) {
         userService.deleteUser(id);
     }
-
 }
