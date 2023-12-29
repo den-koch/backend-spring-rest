@@ -1,11 +1,14 @@
 package io.github.denkoch.mycosts.payment.controllers;
 
-import io.github.denkoch.mycosts.config.mappers.PaymentMapper;
+import io.github.denkoch.mycosts.category.models.Category;
+import io.github.denkoch.mycosts.category.services.CategoryService;
+import io.github.denkoch.mycosts.exceptions.ResourceNotFoundException;
 import io.github.denkoch.mycosts.payment.models.Payment;
-import io.github.denkoch.mycosts.payment.models.PaymentCreationDto;
 import io.github.denkoch.mycosts.payment.models.PaymentDto;
+import io.github.denkoch.mycosts.payment.models.PaymentRequestDto;
 import io.github.denkoch.mycosts.payment.services.PaymentService;
-import io.github.denkoch.mycosts.user.models.UserCreationDto;
+import io.github.denkoch.mycosts.user.models.User;
+import io.github.denkoch.mycosts.user.services.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -15,6 +18,8 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.PositiveOrZero;
+import lombok.RequiredArgsConstructor;
+import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -26,17 +31,15 @@ import java.util.Collection;
 import java.util.UUID;
 
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/users/{userId}/payments")
 @Tag(name = "Payment Controller", description = "Operations with Payment")
 public class PaymentController {
 
-    private PaymentService paymentService;
-    private PaymentMapper paymentMapper;
-
-    public PaymentController(PaymentService paymentService, PaymentMapper paymentMapper) {
-        this.paymentService = paymentService;
-        this.paymentMapper = paymentMapper;
-    }
+    private final PaymentService paymentService;
+    private final CategoryService categoryService;
+    private final UserService userService;
+    private final ModelMapper modelMapper;
 
     @GetMapping
     @Operation(summary = "Get all user Payments by filter",
@@ -54,10 +57,13 @@ public class PaymentController {
                                                               @RequestParam(required = false) LocalDate before,
                                                               @RequestParam(required = false) LocalDate after,
                                                               @RequestParam(required = false) UUID categoryId,
-                                                              @RequestParam(required = false, defaultValue = "0") @PositiveOrZero Long page) {
+                                                              @RequestParam(required = false, defaultValue = "0") @PositiveOrZero Integer page) {
 
-        Collection<PaymentDto> collection = paymentService.readPayments(userId, before, after, categoryId, page)
-                .stream().map(paymentMapper::paymentToDto).toList();
+        User user = userService.readUser(userId).orElseThrow(() ->
+                new ResourceNotFoundException("User {" + userId + "} not found"));
+
+        Collection<PaymentDto> collection = paymentService.readPayments(user, before, after, categoryId, page)
+                .stream().map(payment -> modelMapper.map(payment, PaymentDto.class)).toList();
         return ResponseEntity.ok(collection);
     }
 
@@ -74,11 +80,13 @@ public class PaymentController {
             @ApiResponse(responseCode = "404", description = "NotFound", content = @Content)}
     )
     public ResponseEntity<PaymentDto> getPayment(@PathVariable UUID userId, @PathVariable UUID id) {
-        Payment payment = paymentService.readPayment(userId, id);
-        if (payment == null) {
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok(paymentMapper.paymentToDto(payment));
+        User user = userService.readUser(userId).orElseThrow(() ->
+                new ResourceNotFoundException("User {" + userId + "} not found"));
+
+        Payment payment = paymentService.readPayment(user, id).orElseThrow(() ->
+                new ResourceNotFoundException("Payment {" + id + "} not found"));
+
+        return ResponseEntity.ok(modelMapper.map(payment, PaymentDto.class));
     }
 
     @PostMapping
@@ -86,24 +94,31 @@ public class PaymentController {
             description = "This method creates a new user payment",
             parameters = @Parameter(name = "userId", description = "User identifier", example = "7a44dbc3-30de-4f75-84e9-a3136e45b911"),
             requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
-                    description = "Payment Creation Dto",
-                    content = @Content(schema = @Schema(implementation = PaymentCreationDto.class)))
+                    description = "Payment Entity",
+                    content = @Content(schema = @Schema(implementation = Payment.class)))
     )
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Created"),
             @ApiResponse(responseCode = "400", description = "BadRequest", content = @Content)}
     )
     public ResponseEntity<PaymentDto> postPayment(@PathVariable UUID userId,
-                                                  @RequestBody @Valid PaymentCreationDto paymentCreationDto) {
-        if (!userId.equals(paymentCreationDto.getUserId())) {
-            return ResponseEntity.badRequest().build();
-        }
+                                                  @RequestBody @Valid PaymentRequestDto paymentRequestDto) {
 
-        Payment payment = paymentMapper.dtoToPayment(paymentCreationDto);
+        User user = userService.readUser(userId).orElseThrow(() ->
+                new ResourceNotFoundException("User {" + userId + "} not found"));
+
+        UUID categoryId = paymentRequestDto.getCategoryId();
+        Category category = categoryService.readCategory(user, categoryId).orElseThrow(() ->
+                new ResourceNotFoundException("Category {" + categoryId + "} not found"));
+
+        Payment payment = modelMapper.map(paymentRequestDto, Payment.class);
+        payment.setUser(user);
+        payment.setCategory(category);
+
         payment = paymentService.createPayment(payment);
 
         URI uri = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}").buildAndExpand(payment.getId()).toUri();
-        return ResponseEntity.created(uri).body(paymentMapper.paymentToDto(payment));
+        return ResponseEntity.created(uri).body(modelMapper.map(payment, PaymentDto.class));
     }
 
     @PutMapping("/{id}")
@@ -115,7 +130,7 @@ public class PaymentController {
             },
             requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
                     description = "Payment Creation Dto",
-                    content = @Content(schema = @Schema(implementation = PaymentCreationDto.class)))
+                    content = @Content(schema = @Schema(implementation = Payment.class)))
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Success"),
@@ -124,16 +139,10 @@ public class PaymentController {
     )
     public ResponseEntity<PaymentDto> putPayment(@PathVariable UUID userId,
                                                  @PathVariable UUID id,
-                                                 @RequestBody @Valid PaymentCreationDto paymentCreationDto) {
+                                                 @RequestBody @Valid PaymentRequestDto paymentRequestDto) {
 
-        if (!userId.equals(paymentCreationDto.getUserId())) {
-            return ResponseEntity.badRequest().build();
-        }
-
-        Payment payment = paymentMapper.dtoToPayment(paymentCreationDto);
-        payment.setId(id);
-        payment = paymentService.updatePayment(payment);
-        return ResponseEntity.ok(paymentMapper.paymentToDto(payment));
+        Payment payment = paymentService.updatePayment(userId, id, paymentRequestDto);
+        return ResponseEntity.ok(modelMapper.map(payment, PaymentDto.class));
     }
 
     @DeleteMapping("/{id}")

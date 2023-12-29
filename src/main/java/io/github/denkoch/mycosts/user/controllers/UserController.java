@@ -1,8 +1,6 @@
 package io.github.denkoch.mycosts.user.controllers;
 
-import io.github.denkoch.mycosts.config.mappers.UserMapper;
 import io.github.denkoch.mycosts.user.models.User;
-import io.github.denkoch.mycosts.user.models.UserCreationDto;
 import io.github.denkoch.mycosts.user.models.UserDto;
 import io.github.denkoch.mycosts.user.services.UserService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -13,6 +11,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -20,6 +19,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
 import java.util.Collection;
+import java.util.Optional;
 import java.util.UUID;
 
 @RestController
@@ -28,11 +28,11 @@ import java.util.UUID;
 public class UserController {
 
     private UserService userService;
-    private UserMapper userMapper;
+    private ModelMapper modelMapper;
 
-    public UserController(UserService userService, UserMapper userMapper) {
+    public UserController(UserService userService, ModelMapper modelMapper) {
         this.userService = userService;
-        this.userMapper = userMapper;
+        this.modelMapper = modelMapper;
     }
 
     @GetMapping
@@ -40,7 +40,7 @@ public class UserController {
     @ApiResponses({@ApiResponse(responseCode = "200", description = "Success")})
     public ResponseEntity<Collection<UserDto>> getUsers() {
         Collection<UserDto> collection = userService.readUsers()
-                .stream().map(userMapper::userToDto).toList();
+                .stream().map(user -> modelMapper.map(user, UserDto.class)).toList();
         return ResponseEntity.ok(collection);
     }
 
@@ -54,49 +54,46 @@ public class UserController {
             @ApiResponse(responseCode = "404", description = "NotFound", content = @Content)}
     )
     public ResponseEntity<UserDto> getUser(@PathVariable UUID id) {
-        User user = userService.readUser(id);
-        if (user == null)
+        Optional<User> user = userService.readUser(id);
+        if (user.isEmpty())
             return ResponseEntity.notFound().build();
-        return ResponseEntity.ok(userMapper.userToDto(user));
+        return ResponseEntity.ok(modelMapper.map(user, UserDto.class));
     }
 
     @PostMapping
     @Operation(summary = "Create User",
             description = "This method creates a new user",
             requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
-                    description = "User Creation Dto",
-                    content = @Content(schema = @Schema(implementation = UserCreationDto.class)))
+                    description = "User entity",
+                    content = @Content(schema = @Schema(implementation = User.class)))
     )
     @ApiResponses({
             @ApiResponse(responseCode = "201", description = "Created"),
             @ApiResponse(responseCode = "400", description = "BadRequest", content = @Content)}
     )
-    public ResponseEntity<UserDto> postUser(@RequestBody @Valid UserCreationDto userCreationDto) {
-        User user = userMapper.dtoToUser(userCreationDto);
+    public ResponseEntity<UserDto> postUser(@RequestBody @Valid User user) {
         user = userService.createUser(user);
 
         URI uri = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}").buildAndExpand(user.getId()).toUri();
-        return ResponseEntity.created(uri).body(userMapper.userToDto(user));
+        return ResponseEntity.created(uri).body(modelMapper.map(user, UserDto.class));
     }
 
     @PutMapping("/{id}")
     @Operation(summary = "Update User by Id",
-            description = "This method updates user info",
+            description = "This method updates updatedUser info",
             parameters = @Parameter(name = "id", description = "User identifier", example = "7a44dbc3-30de-4f75-84e9-a3136e45b911"),
             requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(
-                    description = "User Creation Dto",
-                    content = @Content(schema = @Schema(implementation = UserCreationDto.class)))
+                    description = "User",
+                    content = @Content(schema = @Schema(implementation = User.class)))
     )
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "Success"),
             @ApiResponse(responseCode = "400", description = "BadRequest", content = @Content),
             @ApiResponse(responseCode = "404", description = "NotFound", content = @Content)}
     )
-    public ResponseEntity<UserDto> putUser(@PathVariable UUID id, @RequestBody @Valid UserCreationDto userCreationDto) {
-        User user = userMapper.dtoToUser(userCreationDto);
-        user.setId(id);
-        user = userService.updateUser(user);
-        return ResponseEntity.ok(userMapper.userToDto(user));
+    public ResponseEntity<UserDto> putUser(@PathVariable UUID id, @RequestBody @Valid User updatedUser) {
+        User user = userService.updateUser(id, updatedUser);
+        return ResponseEntity.ok(modelMapper.map(user, UserDto.class));
     }
 
     @DeleteMapping("/{id}")
