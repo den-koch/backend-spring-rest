@@ -2,12 +2,9 @@ package io.github.denkoch.mycosts.payment.services;
 
 import io.github.denkoch.mycosts.category.repositories.CategoryRepository;
 import io.github.denkoch.mycosts.payment.models.Payment;
-//import io.github.denkoch.mycosts.payment.repositories.InMemoryPaymentRepository;
 import io.github.denkoch.mycosts.payment.repositories.PaymentFilterRepository;
-import io.github.denkoch.mycosts.payment.repositories.PaymentRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.Collection;
@@ -24,6 +21,7 @@ public class PaymentService {
         this.categoryRepository = categoryRepository;
     }
 
+    @Transactional
     public Collection<Payment> readPayments(Long userId, LocalDate before, LocalDate after, Long categoryId, Long page) {
 
         // values per page
@@ -49,11 +47,13 @@ public class PaymentService {
         return paymentRepository.findById(userId, id);
     }
 
+    @Transactional
     public Payment createPayment(Payment payment) {
         categoryRepository.findById(payment.getUserId(), payment.getCategoryId());
         return paymentRepository.save(payment);
     }
 
+    @Transactional
     public Payment updatePayment(Payment payment) {
         categoryRepository.findById(payment.getUserId(), payment.getCategoryId());
         return paymentRepository.save(payment);

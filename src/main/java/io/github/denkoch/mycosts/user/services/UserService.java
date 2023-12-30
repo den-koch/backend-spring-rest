@@ -4,13 +4,10 @@ import io.github.denkoch.mycosts.category.repositories.CategoryRepository;
 import io.github.denkoch.mycosts.payment.repositories.PaymentRepository;
 import io.github.denkoch.mycosts.user.models.User;
 import io.github.denkoch.mycosts.user.repositories.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.UUID;
 
 @Service
 public class UserService {
