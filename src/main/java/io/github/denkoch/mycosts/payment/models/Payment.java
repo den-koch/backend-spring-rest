@@ -4,14 +4,8 @@ import io.github.denkoch.mycosts.category.models.Category;
 import io.github.denkoch.mycosts.payment.models.enums.PaymentType;
 import io.github.denkoch.mycosts.user.models.User;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.PastOrPresent;
-import jakarta.validation.constraints.Positive;
-import lombok.AllArgsConstructor;
-import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
-import org.mapstruct.Named;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -41,3 +35,4 @@ public class Payment {
     @JoinColumn(name = "category_id", referencedColumnName = "id")
     private Category category;
 }
+
